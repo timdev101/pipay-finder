@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pi Pay — Pittsburgh Client Finder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c24;
+    --surface2: #1e232e;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #3b82f6;
+    --accent-dim: rgba(59,130,246,0.12);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --radius: 8px;
+    --radius-lg: 14px;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 14px; color: #fff;
+    font-family: var(--mono);
+  }
+
+  .logo-text { font-weight: 600; font-size: 15px; }
+  .logo-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  .header-tag {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(59,130,246,0.2);
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: calc(100vh - 65px);
+  }
+
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    background: var(--surface);
+    overflow-y: auto;
+  }
+
+  .main {
+    padding: 20px 24px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    margin-top: 18px;
+  }
+
+  .section-label:first-child { margin-top: 0; }
+
+  .field { margin-bottom: 10px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+  select, input[type=number], input[type=text] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--font);
+    padding: 8px 10px;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select:focus, input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 4px; }
+
+  .chip {
+    font-size: 11px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    cursor: pointer;
+    color: var(--muted);
+    background: transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .chip.on {
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-color: rgba(59,130,246,0.35);
+  }
+
+  .find-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 11px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s;
+  }
+
+  .find-btn:hover { opacity: 0.9; }
+  .find-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+
+  .kpi-lbl { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .kpi-val { font-size: 22px; font-weight: 600; font-family: var(--mono); }
+  .kpi-val.blue { color: var(--accent); }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.amber { color: var(--amber); }
+  .kpi-val.green { color: var(--green); }
+
+  .prospect {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s;
+  }
+
+  .prospect:hover { border-color: var(--border-strong); }
+  .prospect.hot { border-left: 3px solid var(--red); }
+  .prospect.warm { border-left: 3px solid var(--amber); }
+  .prospect.cold { border-left: 3px solid var(--accent); }
+
+  .p-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .p-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .p-addr { font-size: 12px; color: var(--muted); }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-family: var(--mono);
+  }
+
+  .badge.hot { background: var(--red-dim); color: var(--red); }
+  .badge.warm { background: var(--amber-dim); color: var(--amber); }
+  .badge.cold { background: var(--accent-dim); color: var(--accent); }
+
+  .p-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .p-stat {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+  }
+
+  .p-stat-lbl { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+  .p-stat-val { font-size: 13px; font-weight: 600; font-family: var(--mono); }
+  .p-stat-val.red { color: var(--red); }
+  .p-stat-val.green { color: var(--green); }
+  .p-stat-val.amber { color: var(--amber); }
+
+  .p-hot-signal {
+    background: var(--red-dim);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-size: 12px;
+    color: #fca5a5;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .p-tip {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .p-tip strong { color: var(--text); }
+
+  .signals { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+  .signal {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+  }
+
+  .signal.first { border-color: rgba(239,68,68,0.3); color: #fca5a5; background: var(--red-dim); }
+
+  .p-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  .p-btn {
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--font);
+    transition: background 0.15s;
+  }
+
+  .p-btn:hover { background: var(--surface2); }
+  .p-btn.accent { color: var(--accent); border-color: rgba(59,130,246,0.3); }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--muted);
+    text-align: center;
+    gap: 12px;
+  }
+
+  .empty-icon { font-size: 40px; opacity: 0.3; }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .pitch-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .pitch-modal.open { display: flex; }
+
+  .pitch-inner {
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .pitch-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .pitch-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+  }
+
+  .pitch-body {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .pitch-loading { text-align: center; padding: 2rem; color: var(--muted); }
+
+  .pitch-actions { margin-top: 16px; display: flex; gap: 8px; }
+
+  .copy-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: var(--font);
+  }
+
+  .close-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: var(--font);
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">Pi</div>
+    <div>
+      <div class="logo-text">Pi Pay — Client Finder</div>
+      <div class="logo-sub">Pittsburgh territory prospecting tool</div>
+    </div>
+  </div>
+  <div class="header-tag">cash-discount intel</div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+
+    <div class="section-label">Territory</div>
+    <div class="field">
+      <label>Neighborhood / area</label>
+      <select id="hood">
+        <option value="Pittsburgh PA">All Pittsburgh</option>
+        <option value="South Side Pittsburgh PA">South Side</option>
+        <option value="Lawrenceville Pittsburgh PA">Lawrenceville</option>
+        <option value="Shadyside Pittsburgh PA">Shadyside</option>
+        <option value="Squirrel Hill Pittsburgh PA">Squirrel Hill</option>
+        <option value="Strip District Pittsburgh PA">Strip District</option>
+        <option value="Downtown Pittsburgh PA">Downtown</option>
+        <option value="Bloomfield Pittsburgh PA">Bloomfield</option>
+        <option value="Mt Washington Pittsburgh PA">Mt. Washington</option>
+        <option value="Mount Lebanon PA">Mt. Lebanon</option>
+        <option value="Castle Shannon PA">Castle Shannon</option>
+        <option value="Bethel Park PA">Bethel Park</option>
+        <option value="Bridgeville PA">Bridgeville</option>
+        <option value="Carnegie PA">Carnegie</option>
+        <option value="Dormont PA">Dormont</option>
+        <option value="Scott Township PA">Scott Township</option>
+        <option value="Upper St Clair PA">Upper St. Clair</option>
+        <option value="Canonsburg PA">Canonsburg</option>
+        <option value="Peters Township PA">Peters Township</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Business type</label>
+      <select id="btype">
+        <option value="any independent local business including restaurants, bars, pizza shops, coffee shops, salons, nail salons, barbershops, boutiques, gift shops, auto repair, diners, florists, pet groomers, massage studios, and dry cleaners — mix the types across results">Any type (all businesses)</option>
+        <option value="restaurant">Restaurants</option>
+        <option value="bar">Bars / nightlife</option>
+        <option value="pizza shop">Pizza shops</option>
+        <option value="coffee shop">Coffee shops</option>
+        <option value="hair salon">Hair salons</option>
+        <option value="nail salon">Nail salons</option>
+        <option value="barbershop">Barbershops</option>
+        <option value="boutique clothing store">Boutiques</option>
+        <option value="gift shop">Gift shops</option>
+        <option value="auto repair shop">Auto repair</option>
+        <option value="diner">Diners</option>
+        <option value="florist">Florists</option>
+        <option value="pet groomer">Pet groomers</option>
+        <option value="massage therapy studio">Massage / wellness</option>
+        <option value="dry cleaner">Dry cleaners</option>
+      </select>
+    </div>
+
+    <div class="section-label">Pain filters</div>
+    <div class="field">
+      <label>Min monthly volume</label>
+      <select id="minvol">
+        <option value="0">Any</option>
+        <option value="10000">$10k+</option>
+        <option value="25000" selected>$25k+</option>
+        <option value="50000">$50k+</option>
+        <option value="75000">$75k+</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Likely processor</label>
+      <select id="proc">
+        <option value="any">Any / unknown</option>
+        <option value="Square">Square users</option>
+        <option value="Heartland">Heartland</option>
+        <option value="First Data / Fiserv">First Data</option>
+        <option value="legacy contract">Legacy / old contract</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Owner on-site</label>
+      <select id="owner">
+        <option value="any">Any</option>
+        <option value="high" selected>High likelihood</option>
+        <option value="medium">Medium likelihood</option>
+      </select>
+    </div>
+
+    <div class="section-label">Best approach days</div>
+    <div class="chips" id="dayChips">
+      <span class="chip" data-val="Mon" onclick="tog(this)">Mon</span>
+      <span class="chip on" data-val="Tue" onclick="tog(this)">Tue</span>
+      <span class="chip on" data-val="Wed" onclick="tog(this)">Wed</span>
+      <span class="chip on" data-val="Thu" onclick="tog(this)">Thu</span>
+      <span class="chip" data-val="Fri" onclick="tog(this)">Fri</span>
+      <span class="chip" data-val="Sat" onclick="tog(this)">Sat</span>
+    </div>
+
+    <div class="section-label">Best approach times</div>
+    <div class="chips" id="timeChips">
+      <span class="chip on" data-val="9–11am" onclick="tog(this)">9–11am</span>
+      <span class="chip on" data-val="11am–1pm" onclick="tog(this)">11am–1pm</span>
+      <span class="chip" data-val="2–4pm" onclick="tog(this)">2–4pm</span>
+      <span class="chip" data-val="4–6pm" onclick="tog(this)">4–6pm</span>
+    </div>
+
+    <button class="find-btn" id="findBtn" onclick="find()">
+      <span id="btnIcon">&#9906;</span> Find clients in need
+    </button>
+
+  </aside>
+
+  <main class="main">
+    <div id="results">
+      <div class="empty-state">
+        <div class="empty-icon">&#127970;</div>
+        <div style="font-size:15px; font-weight:500; color: var(--text);">Ready to prospect</div>
+        <div style="font-size:13px; max-width:280px;">Set your territory and pain filters, then search to find businesses most likely overpaying on processing fees right now.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="pitch-modal" id="pitchModal">
+  <div class="pitch-inner">
+    <div class="pitch-title">
+      <span id="pitchTitle">Generating...</span>
+      <button class="pitch-close" onclick="closeModal()">&#10005;</button>
+    </div>
+    <div class="pitch-body" id="pitchBody">
+      <div class="pitch-loading"><div class="spinner" style="margin: 0 auto 10px;"></div>Building your pitch...</div>
+    </div>
+    <div class="pitch-actions">
+      <button class="copy-btn" onclick="copyPitch()">Copy to clipboard</button>
+      <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API = "/.netlify/functions/chat";
+  let allProspects = [];
+  function tog(el) { el.classList.toggle('on'); }
+
+  function chips(id) {
+    return [...document.querySelectorAll('#' + id + ' .chip.on')].map(c => c.dataset.val).join(', ');
+  }
+
+  function fmt(n) { return '$' + Math.round(n).toLocaleString(); }
+
+  async function find() {
+    const hood = document.getElementById('hood').value;
+    const btype = document.getElementById('btype').value;
+    const minvol = parseInt(document.getElementById('minvol').value) || 0;
+    const proc = document.getElementById('proc').value;
+    const owner = document.getElementById('owner').value;
+    const days = chips('dayChips') || 'Tue, Wed, Thu';
+    const times = chips('timeChips') || '9–11am';
+
+    const btn = document.getElementById('findBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Scanning territory...';
+
+    document.getElementById('results').innerHTML = `<div class="empty-state"><div class="spinner" style="width:24px;height:24px;border-width:3px;"></div><div style="margin-top:12px;font-size:13px;">Finding businesses in pain in ${hood}...</div></div>`;
+
+    const prompt = `You are a payment processing sales intelligence tool for a Pi Pay rep in Pittsburgh, PA.
+
+Generate 9 specific, realistic INDEPENDENT (non-chain) businesses in "${hood}" of type "${btype}" that are likely overpaying on credit/debit processing.
+
+Filters:
+- Minimum estimated monthly card volume: $${minvol}
+- Likely processor: ${proc}
+- Owner on-site likelihood: ${owner}
+- Best approach days: ${days}
+- Best approach times: ${times}
+
+Return ONLY valid JSON, no markdown, no text outside the JSON:
+{"businesses":[{"name":"string","address":"string","phone":"412-XXX-XXXX","years_open":number,"business_type":"string — the specific type of business","estimated_monthly_volume":number,"estimated_current_rate":number,"estimated_monthly_fee":number,"likely_processor":"string — specific processor name e.g. Square, Heartland, First Data/Fiserv, Worldpay, Toast, Clover/Heartland, PayPal/Zettle, or Unknown legacy processor","processor_reasoning":"string — 1 sentence explaining WHY you think this processor based on business age, type, size, and known market patterns","owner_onsite":"high|medium|low","priority":"hot|warm|cold","best_day":"string","best_time":"string","pain_signals":["signal1","signal2","signal3"],"hot_signal":"string — single most compelling reason they need this NOW","approach_note":"string — one specific tactical walk-in tip"}]}
+
+Rules:
+- Authentic Pittsburgh names (Italian, Eastern European, Irish, local flavor)
+- Real-sounding addresses in ${hood}
+- 4 hot / 3 warm / 2 cold
+- Rates: Square=2.6-2.7%, Heartland/First Data=2.8-3.4%, legacy/unknown=2.9-3.6%, Toast=2.49% flat but high monthly fees
+- estimated_monthly_fee = estimated_monthly_volume * 0.85 * (estimated_current_rate/100)
+- likely_processor must be a specific named processor, never just "unknown"
+- processor_reasoning must cite the specific signals that point to that processor (e.g. "Opened in 2019 during Square's peak indie restaurant push, low avg ticket suggests no table-side ordering system")
+- pain_signals must be specific and believable field observations
+- approach_note must be tactical to that business type and neighborhood
+- business_type must be the plain English type (e.g. "Pizza shop", "Nail salon", "Auto repair")`;
+
+    try {
+      const r = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      });
+      const d = await r.json();
+      const txt = d.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(txt);
+      allProspects = parsed.businesses || [];
+      render(allProspects, hood, btype);
+    } catch(e) {
+      document.getElementById('results').innerHTML = '<div class="empty-state"><div>Search failed — check connection and retry.</div></div>';
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<span>&#9906;</span> Find clients in need';
+  }
+
+  function render(businesses, hood, btype) {
+    businesses.sort((a,b) => ({hot:0,warm:1,cold:2}[a.priority] - {hot:0,warm:1,cold:2}[b.priority]));
+    const hot = businesses.filter(b=>b.priority==='hot').length;
+    const warm = businesses.filter(b=>b.priority==='warm').length;
+    const pool = businesses.reduce((s,b)=>s+(b.estimated_monthly_fee||0)*12, 0);
+
+    let html = `<div class="kpi-row">
+      <div class="kpi"><div class="kpi-lbl">Prospects found</div><div class="kpi-val blue">${businesses.length}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Hot leads</div><div class="kpi-val red">${hot}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Warm leads</div><div class="kpi-val amber">${warm}</div></div>
+      <div class="kpi"><div class="kpi-lbl">Annual fee pool</div><div class="kpi-val green">${fmt(pool)}</div></div>
+    </div>
+    <div class="results-header"><span>${businesses.length} prospects in ${hood} — sorted by priority</span></div>`;
+
+    businesses.forEach((b, i) => {
+      const annual = Math.round((b.estimated_monthly_fee||0)*12);
+      html += `<div class="prospect ${b.priority}">
+        <div class="p-top">
+          <div>
+            <div class="p-name">${b.name}</div>
+            <div class="p-addr">${b.business_type || ''} &nbsp;·&nbsp; ${b.address} &nbsp;·&nbsp; ${b.phone} &nbsp;·&nbsp; ${b.years_open} yrs open</div>
+          </div>
+          <span class="badge ${b.priority}">${b.priority.toUpperCase()}</span>
+        </div>
+        <div class="p-grid">
+          <div class="p-stat"><div class="p-stat-lbl">Monthly fees wasted</div><div class="p-stat-val red">${fmt(b.estimated_monthly_fee)}</div></div>
+          <div class="p-stat"><div class="p-stat-lbl">Annual fee waste</div><div class="p-stat-val red">${fmt(annual)}</div></div>
+          <div class="p-stat"><div class="p-stat-lbl">Likely processor</div><div class="p-stat-val amber">${b.likely_processor}</div></div>
+          <div class="p-stat"><div class="p-stat-lbl">Card volume est.</div><div class="p-stat-val">${fmt(b.estimated_monthly_volume)}/mo</div></div>
+          <div class="p-stat"><div class="p-stat-lbl">Best window</div><div class="p-stat-val">${b.best_day} ${b.best_time}</div></div>
+          <div class="p-stat"><div class="p-stat-lbl">Owner on-site</div><div class="p-stat-val ${b.owner_onsite==='high'?'green':b.owner_onsite==='medium'?'amber':'red'}">${b.owner_onsite}</div></div>
+        </div>
+        <div class="p-tip" style="margin-bottom:8px;"><strong>Processor intel:</strong> ${b.processor_reasoning || 'Based on business type and age patterns.'}</div>
+        <div class="p-hot-signal">&#9888; ${b.hot_signal}</div>
+        <div class="signals">${(b.pain_signals||[]).map((s,j)=>`<span class="signal${j===0?' first':''}">${s}</span>`).join('')}</div>
+        <div class="p-tip"><strong>Walk-in tip:</strong> ${b.approach_note}</div>
+        <div class="p-actions">
+          <button class="p-btn" onclick="openModal(${i},'opener')">Write opener</button>
+          <button class="p-btn" onclick="openModal(${i},'route')">Plan the visit</button>
+          <button class="p-btn accent" onclick="openModal(${i},'analysis')">Full analysis</button>
+        </div>
+      </div>`;
+    });
+
+    document.getElementById('results').innerHTML = html;
+  }
+
+  function openModal(i, type) {
+    const b = allProspects[i];
+    const btype = document.getElementById('btype').value;
+    const modal = document.getElementById('pitchModal');
+    const body = document.getElementById('pitchBody');
+    const title = document.getElementById('pitchTitle');
+
+    let prompt = '';
+    if (type === 'opener') {
+      title.textContent = 'Cold walk-in opener — ' + b.name;
+      prompt = `Write me a natural, confident cold walk-in opener for ${b.name}, a ${btype} in Pittsburgh. They're likely on ${b.likely_processor} paying around ${fmt(b.estimated_monthly_fee)}/month in processing fees. Key pain signal: ${b.hot_signal}. Walk-in tip context: ${b.approach_note}. Give me exactly the first 3–4 sentences I say when I walk through the door. Make it conversational, not scripted. Include one natural question that gets them talking.`;
+    } else if (type === 'route') {
+      title.textContent = 'Visit plan — ' + b.name;
+      prompt = `Help me plan my Pi Pay sales visit to ${b.name} at ${b.address}. Best window: ${b.best_day} ${b.best_time}. They're on ${b.likely_processor} at an estimated ${b.estimated_current_rate}% rate, paying ${fmt(b.estimated_monthly_fee)}/month. Owner on-site likelihood: ${b.owner_onsite}. Give me: (1) what to do before I walk in, (2) goal for the first visit, (3) what I'm listening for, (4) the leave-behind move if the owner isn't there.`;
+    } else {
+      title.textContent = 'Full savings analysis — ' + b.name;
+      prompt = `Run a complete Pi Pay savings analysis for ${b.name}. Monthly card volume est. ${fmt(b.estimated_monthly_volume)}, current processor ${b.likely_processor} at ~${b.estimated_current_rate}%, monthly fees ~${fmt(b.estimated_monthly_fee)}. Show: monthly savings, annual savings, what % of their profit this represents, what the annual savings is equivalent to (employee, equipment, etc.), and the single most powerful number to anchor the conversation to. Format clearly with numbers up front.`;
+    }
+
+    body.innerHTML = '<div class="pitch-loading"><div class="spinner" style="margin:0 auto 10px;"></div>Building...</div>';
+    modal.classList.add('open');
+
+    fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+    }).then(r => r.json()).then(d => {
+      body.textContent = d.content.map(c => c.text||'').join('');
+    }).catch(() => {
+      body.textContent = 'Failed to generate — try again.';
+    });
+  }
+
+  function closeModal() {
+    document.getElementById('pitchModal').classList.remove('open');
+  }
+
+  function copyPitch() {
+    navigator.clipboard.writeText(document.getElementById('pitchBody').textContent);
+  }
+</script>
+</body>
+</html>
