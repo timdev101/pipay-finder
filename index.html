@@ -583,35 +583,18 @@
 
     const prompt = `You are a payment processing sales intelligence tool for a Pi Pay rep in Pittsburgh, PA.
 
-Generate 9 specific, realistic INDEPENDENT (non-chain) businesses in "${hood}" of type "${btype}" that are likely overpaying on credit/debit processing.
+Generate 6 realistic independent businesses in "${hood}" of type "${btype}" overpaying on card processing. Owner on-site: ${owner}. Best days: ${days} ${times}.
 
-Filters:
-- Minimum estimated monthly card volume: $${minvol}
-- Likely processor: ${proc}
-- Owner on-site likelihood: ${owner}
-- Best approach days: ${days}
-- Best approach times: ${times}
+Return ONLY valid JSON:
+{"businesses":[{"name":"string","address":"string","phone":"412-XXX-XXXX","years_open":number,"business_type":"string","estimated_monthly_volume":number,"estimated_current_rate":number,"estimated_monthly_fee":number,"likely_processor":"string","processor_reasoning":"string","owner_onsite":"high|medium|low","priority":"hot|warm|cold","best_day":"string","best_time":"string","pain_signals":["s1","s2"],"hot_signal":"string","approach_note":"string"}]}
 
-Return ONLY valid JSON, no markdown, no text outside the JSON:
-{"businesses":[{"name":"string","address":"string","phone":"412-XXX-XXXX","years_open":number,"business_type":"string — the specific type of business","estimated_monthly_volume":number,"estimated_current_rate":number,"estimated_monthly_fee":number,"likely_processor":"string — specific processor name e.g. Square, Heartland, First Data/Fiserv, Worldpay, Toast, Clover/Heartland, PayPal/Zettle, or Unknown legacy processor","processor_reasoning":"string — 1 sentence explaining WHY you think this processor based on business age, type, size, and known market patterns","owner_onsite":"high|medium|low","priority":"hot|warm|cold","best_day":"string","best_time":"string","pain_signals":["signal1","signal2","signal3"],"hot_signal":"string — single most compelling reason they need this NOW","approach_note":"string — one specific tactical walk-in tip"}]}
-
-Rules:
-- Authentic Pittsburgh names (Italian, Eastern European, Irish, local flavor)
-- Real-sounding addresses in ${hood}
-- 4 hot / 3 warm / 2 cold
-- Rates: Square=2.6-2.7%, Heartland/First Data=2.8-3.4%, legacy/unknown=2.9-3.6%, Toast=2.49% flat but high monthly fees
-- estimated_monthly_fee = estimated_monthly_volume * 0.85 * (estimated_current_rate/100)
-- likely_processor must be a specific named processor, never just "unknown"
-- processor_reasoning must cite the specific signals that point to that processor (e.g. "Opened in 2019 during Square's peak indie restaurant push, low avg ticket suggests no table-side ordering system")
-- pain_signals must be specific and believable field observations
-- approach_note must be tactical to that business type and neighborhood
-- business_type must be the plain English type (e.g. "Pizza shop", "Nail salon", "Auto repair")`;
+Rules: authentic Pittsburgh names, real ${hood} addresses, 3 hot/2 warm/1 cold, fees=volume*0.85*(rate/100), Square=2.65%, Heartland=3.0%, FirstData=3.2%, legacy=3.4%`;
 
     try {
       const r = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
       });
       const d = await r.json();
       const txt = d.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
@@ -698,7 +681,7 @@ Rules:
     fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
     }).then(r => r.json()).then(d => {
       body.textContent = d.content.map(c => c.text||'').join('');
     }).catch(() => {
